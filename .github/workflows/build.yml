@@ -9,9 +9,10 @@ on:
   workflow_dispatch:
 
 env:
-  NGINX_VERSION: 1
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  NGINX_VERSION: 1
+  NGINX_MODULES: "modsecurity geoip2 brotli"
 
 jobs:
   update:
@@ -99,8 +100,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            NGINX_FROM_IMAGE=nginx:1
-            ENABLED_MODULES="modsecurity geoip2 brotli"
+            NGINX_FROM_IMAGE=nginx:${{ env.NGINX_VERSION }}
+            ENABLED_MODULES=${{ env.NGINX_MODULES }}
 
       - name: Sign the published Docker image
         if: ${{ github.event_name != 'pull_request' }}
