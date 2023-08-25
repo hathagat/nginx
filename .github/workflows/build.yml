@@ -1,0 +1,108 @@
+name: Image Build
+
+on:
+  push:
+    branches:
+    - master
+  schedule:
+  - cron:  '0 1 * * 0'
+  workflow_dispatch:
+
+env:
+  NGINX_VERSION: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Update Dockerfile
+      run: |
+        curl -O https://raw.githubusercontent.com/nginxinc/docker-nginx/master/modules/Dockerfile
+        cat >> Dockerfile <<END
+        
+        COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/unicode.mapping /etc/nginx/modsec/unicode.mapping
+        COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/modsecurity.conf /etc/nginx/modsec/modsecurity.conf
+        COPY --from=owasp/modsecurity-crs:nginx /opt/owasp-crs/ /etc/nginx/owasp-crs/
+      
+        RUN sed -i '1 i\Include /etc/nginx/owasp-crs/rules/*.conf' /etc/nginx/modsec/modsecurity.conf \
+            && sed -i '1 i\Include /etc/nginx/owasp-crs/crs-setup.conf' /etc/nginx/modsec/modsecurity.conf \
+            && ln -s /dev/stdout /var/log/modsec_audit.log \
+            && ln -s /dev/stdout /var/log/modsec_debug.log \
+            && sed -i '/error_log/i load_module modules/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf \
+            && sed -i '/error_log/i load_module modules/ngx_http_geoip2_module.so;' /etc/nginx/nginx.conf \
+            && sed -i '/error_log/i load_module modules/ngx_http_brotli_static_module.so;' /etc/nginx/nginx.conf \
+            && sed -i '/error_log/i load_module modules/ngx_http_brotli_filter_module.so;' /etc/nginx/nginx.conf  \
+            && sed -i '/keepalive_timeout/d' /etc/nginx/nginx.conf
+        
+        END
+
+    - name: Commit updates
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          git config --local user.email "workflow@github.com"
+          git config --local user.name "GitHub Workflow"
+          git add -A
+          git commit -m "Apply updates from Nginx repository"
+        fi
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        force: true
+
+  build:
+    needs: update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@main
+
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            latest
+            ${{ env.NGINX_VERSION }}
+
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v4
+        with:
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NGINX_FROM_IMAGE=nginx:1
+            ENABLED_MODULES="modsecurity geoip2 brotli"
+
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+        run: echo "${{ steps.meta.outputs.tags }}" | xargs -I {} cosign sign -y {}@${{ steps.build-and-push.outputs.digest }}
