@@ -84,5 +84,13 @@ COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/unicode.mapping /etc/
 COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/modsecurity.conf /etc/nginx/modsec/modsecurity.conf
 COPY --from=owasp/modsecurity-crs:nginx /opt/owasp-crs/ /etc/nginx/owasp-crs/
 
-RUN sed -i '1 i\Include /etc/nginx/owasp-crs/rules/*.conf' /etc/nginx/modsec/modsecurity.conf     && sed -i '1 i\Include /etc/nginx/owasp-crs/crs-setup.conf' /etc/nginx/modsec/modsecurity.conf     && ln -s /dev/stdout /var/log/modsec_audit.log     && ln -s /dev/stdout /var/log/modsec_debug.log     && sed -i '/error_log/i load_module modules/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf     && sed -i '/error_log/i load_module modules/ngx_http_geoip2_module.so;' /etc/nginx/nginx.conf     && sed -i '/error_log/i load_module modules/ngx_http_brotli_static_module.so;' /etc/nginx/nginx.conf     && sed -i '/error_log/i load_module modules/ngx_http_brotli_filter_module.so;' /etc/nginx/nginx.conf      && sed -i '/keepalive_timeout/d' /etc/nginx/nginx.conf
+RUN sed -i '1 i\Include /etc/nginx/owasp-crs/rules/*.conf' /etc/nginx/modsec/modsecurity.conf \
+    && sed -i '1 i\Include /etc/nginx/owasp-crs/crs-setup.conf' /etc/nginx/modsec/modsecurity.conf \
+    && ln -s /dev/stdout /var/log/modsec_audit.log \
+    && ln -s /dev/stdout /var/log/modsec_debug.log \
+    && sed -i '/error_log/i load_module modules/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf \
+    && sed -i '/error_log/i load_module modules/ngx_http_geoip2_module.so;' /etc/nginx/nginx.conf \
+    && sed -i '/error_log/i load_module modules/ngx_http_brotli_static_module.so;' /etc/nginx/nginx.conf \
+    && sed -i '/error_log/i load_module modules/ngx_http_brotli_filter_module.so;' /etc/nginx/nginx.conf  \
+    && sed -i '/keepalive_timeout/d' /etc/nginx/nginx.conf
 
