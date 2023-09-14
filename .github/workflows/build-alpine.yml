@@ -1,4 +1,4 @@
-name: Image Build
+name: Alpine Image Build
 
 on:
   push:
