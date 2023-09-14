@@ -12,4 +12,6 @@ To use geoip the corresponding database needs to be provided, for example as a v
 ghcr.io/hathagat/nginx:latest
 ghcr.io/hathagat/nginx:1
 
+ghcr.io/hathagat/nginx:alpine
+ghcr.io/hathagat/nginx:1-alpine
 ```

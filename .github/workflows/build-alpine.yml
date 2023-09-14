@@ -11,7 +11,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  NGINX_VERSION: 1
+  NGINX_VERSION: 1-alpine
   NGINX_MODULES: "modsecurity geoip2 brotli"
 
 jobs:
@@ -24,8 +24,9 @@ jobs:
     - uses: actions/checkout@v3
     - name: Update Dockerfile
       run: |
-        curl -O https://raw.githubusercontent.com/nginxinc/docker-nginx/master/modules/Dockerfile
-        cat >> Dockerfile <<END
+        curl -O https://raw.githubusercontent.com/nginxinc/docker-nginx/master/modules/Dockerfile.alpine
+        sed -i 's/pcre2-dev/pcre-dev pcre2-dev/g' Dockerfile.alpine
+        cat >> Dockerfile.alpine <<END
         
         COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/unicode.mapping /etc/nginx/modsec/unicode.mapping
         COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/modsecurity.conf /etc/nginx/modsec/modsecurity.conf
@@ -86,7 +87,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            latest
+            alpine
             ${{ env.NGINX_VERSION }}
 
       - name: Build and push Docker image
@@ -95,6 +96,7 @@ jobs:
         with:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
+          file: Dockerfile.alpine
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
