@@ -44,6 +44,8 @@ jobs:
             && sed -i '/keepalive_timeout/d' /etc/nginx/nginx.conf
         
         END
+        # Fix https://github.com/nginxinc/docker-nginx/issues/834
+        sed -i 's/libparse-recdescent-perl/& libpcre3-dev/g' Dockerfile
 
     - name: Commit and push changes
       id: commit-and-push

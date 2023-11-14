@@ -1,6 +1,7 @@
 # Nginx Images
 
-[![Image Build](https://github.com/hathagat/nginx/actions/workflows/build.yml/badge.svg)](https://github.com/hathagat/nginx/actions/workflows/build.yml)
+[![Image Build](https://github.com/hathagat/nginx/actions/workflows/build.yml/badge.svg)](https://github.com/hathagat/nginx/actions/workflows/build.yml) 
+[![Alpine Image Build](https://github.com/hathagat/nginx/actions/workflows/build-alpine.yml/badge.svg)](https://github.com/hathagat/nginx/actions/workflows/build-alpine.yml)
 
 Images in this repository are based on [this Dockerfiles](https://github.com/nginxinc/docker-nginx/blob/master/modules).  
 Additionally they contain the nginx modules `geoip2`, `modsecurity` and `brotli`. For more information see [upstream documentation](https://github.com/nginxinc/docker-nginx/blob/master/modules).  
