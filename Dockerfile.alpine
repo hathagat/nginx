@@ -62,13 +62,12 @@ RUN set -ex \
     && echo "BUILT_MODULES=\"$BUILT_MODULES\"" > /tmp/packages/modules.env
 
 FROM ${NGINX_FROM_IMAGE}
-COPY --from=builder /tmp/packages /tmp/packages
-RUN set -ex \
+RUN --mount=type=bind,target=/tmp/packages/,source=/tmp/packages/,from=builder \
+    set -ex \
     && . /tmp/packages/modules.env \
     && for module in $BUILT_MODULES; do \
            apk add --no-cache --allow-untrusted /tmp/packages/nginx-module-${module}-${NGINX_VERSION}*.apk; \
-       done \
-    && rm -rf /tmp/packages
+       done
 
 COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/unicode.mapping /etc/nginx/modsec/unicode.mapping
 COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/modsecurity.conf /etc/nginx/modsec/modsecurity.conf
