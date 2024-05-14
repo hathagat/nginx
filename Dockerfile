@@ -79,7 +79,7 @@ RUN --mount=type=bind,target=/tmp/packages/,source=/tmp/packages/,from=builder \
     && rm -rf /var/lib/apt/lists/
 
 COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/unicode.mapping /etc/nginx/modsec/unicode.mapping
-COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/modsecurity.conf /etc/nginx/modsec/modsecurity.conf
+COPY --from=owasp/modsecurity-crs:nginx /etc/nginx/templates/modsecurity.d/modsecurity.conf.template /etc/nginx/modsec/modsecurity.conf
 COPY --from=owasp/modsecurity-crs:nginx /opt/owasp-crs /etc/nginx/owasp-crs
 
 RUN sed -i '1 i\Include /etc/nginx/owasp-crs/rules/*.conf' /etc/nginx/modsec/modsecurity.conf \
