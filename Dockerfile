@@ -16,7 +16,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-suggests --no-install-recommends \
                 patch make wget git devscripts debhelper dpkg-dev \
                 quilt lsb-release build-essential libxml2-utils xsltproc \
-                equivs git g++ libparse-recdescent-perl libpcre3-dev \
+                equivs git g++ libparse-recdescent-perl \
     && XSLSCRIPT_SHA512="f7194c5198daeab9b3b0c3aebf006922c7df1d345d454bd8474489ff2eb6b4bf8e2ffe442489a45d1aab80da6ecebe0097759a1e12cc26b5f0613d05b7c09ffa *stdin" \
     && wget -O /tmp/xslscript.pl https://raw.githubusercontent.com/nginx/xslscript/9204424259c343ca08a18a78915f40f28025e093/xslscript.pl \
     && if [ "$(cat /tmp/xslscript.pl | openssl sha512 -r)" = "$XSLSCRIPT_SHA512" ]; then \
@@ -78,18 +78,7 @@ RUN --mount=type=bind,target=/tmp/packages/,source=/tmp/packages/,from=builder \
        done \
     && rm -rf /var/lib/apt/lists/
 
-COPY --from=owasp/modsecurity-crs:nginx /etc/modsecurity.d/unicode.mapping /etc/nginx/modsec/unicode.mapping
-COPY --from=owasp/modsecurity-crs:nginx /etc/nginx/templates/modsecurity.d/modsecurity.conf.template /etc/nginx/modsec/modsecurity.conf
-COPY --from=owasp/modsecurity-crs:nginx /opt/owasp-crs /etc/nginx/owasp-crs
-
-RUN sed -i '1 i\Include /etc/nginx/owasp-crs/rules/*.conf' /etc/nginx/modsec/modsecurity.conf \
-    && sed -i '1 i\Include /etc/nginx/owasp-crs/crs-setup.conf' /etc/nginx/modsec/modsecurity.conf \
-    && ln -s /dev/stdout /var/log/modsec_audit.log \
-    && ln -s /dev/stdout /var/log/modsec_debug.log \
-    && sed -i '/gzip  on/i modsecurity on;' /etc/nginx/nginx.conf \
-    && sed -i '/gzip  on/i modsecurity_rules_file /etc/nginx/modsec/modsecurity.conf;' /etc/nginx/nginx.conf \
-    && sed -i '/error_log/i load_module modules/ngx_http_modsecurity_module.so;' /etc/nginx/nginx.conf \
-    && sed -i '/error_log/i load_module modules/ngx_http_geoip2_module.so;' /etc/nginx/nginx.conf \
+RUN sed -i '/error_log/i load_module modules/ngx_http_geoip2_module.so;' /etc/nginx/nginx.conf \
     && sed -i '/error_log/i load_module modules/ngx_http_brotli_static_module.so;' /etc/nginx/nginx.conf \
     && sed -i '/error_log/i load_module modules/ngx_http_brotli_filter_module.so;' /etc/nginx/nginx.conf  \
     && sed -i '/keepalive_timeout/d' /etc/nginx/nginx.conf
